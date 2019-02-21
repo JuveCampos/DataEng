@@ -22,9 +22,6 @@ mr <- c("ene" = "01",
   "nov" = "11",
   "dic" = "12")
 
-# Funcion captura
-captura <- function(x) rebus::capture(rebus::one_or_more(rebus::WRD))
-
 # Funcion niveles
 niveles <- function(x) levels(as.factor(x))
 
