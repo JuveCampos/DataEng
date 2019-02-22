@@ -42,3 +42,84 @@ procesa_datos_diarios <- function(url){
   
   return(b)
 }
+
+plot_diarias <- function(nml, Nombre_estacion = ""){
+require(lubridate)  
+# Sacamos el Periodo    
+periodo <- paste0(as.character(min(lubridate::year(nml$FECHA))), 
+                  " - ", 
+                  as.character(max(lubridate::year(nml$FECHA))))
+# Generamos la Grafica
+p <-   ggplot(nml, aes(x = nml$FECHA, y = nml$PRECIPITACION)) + 
+    geom_line(colour = 'blue') + 
+    labs(title="Serie de Tiempo de Precipitación Diaria",
+         subtitle=paste0(Nombre_estacion, "Periodo: ", periodo,  ". Nivel Diario"),
+         caption="Fuente: Elaboración propia con datos del SMN - CONAGUA, 2019",
+         y="Precipitación (mm)" , x = "") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5),  # rotate x axis text
+          panel.grid.minor = element_blank()) 
+# Retornamos la grafica  
+return(p)  
+}
+
+plot_mensuales <- function(nml, Nombre_estacion = ""){
+  require(lubridate)
+  require(dplyr)
+  # Sacamos el Periodo    
+  periodo <- paste0(as.character(min(lubridate::year(nml$FECHA))), 
+                    " - ", 
+                    as.character(max(lubridate::year(nml$FECHA))))
+  # Procesamos la base de datos
+  c <- nml
+  c$MES  <- month(c$FECHA)
+  c$YEAR <- year(c$FECHA) 
+  
+  c <- c %>%
+    group_by(YEAR, MES) %>%
+    summarise(prec_anual = sum(na.omit(PRECIPITACION)), 
+              TMAX_prom = mean(TMAX), 
+              TMIN_prom = mean(TMIN) 
+    ) %>%
+    mutate(mes_anio = paste("01", MES, YEAR, sep = "/")) %>%
+    mutate(mes_year = as.Date(mes_anio, format = "%d/%m/%Y"))
+  
+  p <- ggplot(data = c, aes(x = c$mes_year, y = c$prec_anual)) + 
+    geom_line(colour = 'blue') + 
+    labs(title="Serie de Tiempo de Precipitación Mensual",
+         subtitle=paste0(Nombre_estacion, "Periodo: ", periodo,  ". Nivel Mensual"),
+         caption="Fuente: Elaboración propia con datos del SMN - CONAGUA, 2019",
+         y="Precipitación (mm)" , x = "") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5),  # rotate x axis text
+          panel.grid.minor = element_blank()) 
+  return(p)
+}
+
+plot_anual <- function(nml, Nombre_estacion = ""){
+  require(lubridate)
+  require(dplyr)
+  # Sacamos el Periodo    
+  periodo <- paste0(as.character(min(lubridate::year(nml$FECHA))), 
+                    " - ", 
+                    as.character(max(lubridate::year(nml$FECHA))))
+  # Procesamos la base de datos
+  c <- nml
+  c$YEAR <- year(c$FECHA) 
+  c <- c %>%
+    group_by(YEAR) %>%
+    summarise(prec_anual = sum(na.omit(PRECIPITACION)), 
+              TMAX_prom = mean(TMAX), 
+              TMIN_prom = mean(TMIN) 
+    ) 
+  p <- ggplot(data = c, aes(x = c$YEAR, y = c$prec_anual)) + 
+    geom_line(colour = 'blue') + 
+    labs(title="Serie de Tiempo de Precipitación Anual",
+         subtitle=paste0(Nombre_estacion, "Periodo: ", periodo,  ". Anual"),
+         caption="Fuente: Elaboración propia con datos del SMN - CONAGUA, 2019",
+         y="Precipitación (mm)" , x = "") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5),  # rotate x axis text
+          panel.grid.minor = element_blank()) 
+  return(p)
+  }
