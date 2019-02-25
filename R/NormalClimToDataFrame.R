@@ -1,5 +1,12 @@
 # Convertidor de Normales Climatologicas de Conagua a Data Frames
 
+# Funcion extraída de la ayuda de Character Translation and Casefolding
+capwords <- function(s, strict = TRUE) {
+  cap <- function(s) paste(toupper(substring(s, 1, 1)),
+                           {s <- substring(s, 2); if(strict) tolower(s) else s},
+                           sep = "", collapse = " " )
+  sapply(strsplit(s, split = " "), cap, USE.NAMES = !is.null(names(s)))
+}
 
 procesa_datos_diarios <- function(url){
   
@@ -7,11 +14,11 @@ procesa_datos_diarios <- function(url){
   require(stringr)
   require(dplyr)
   require(reshape)
-  
   captura <- function(x) capture(one_or_more(x))
   
   # Patrones
-  pat_fecha <- START %R% captura(DGT) %R% "/" %R% captura(DGT) %R% "/" %R% captura(DGT)
+  pat_fecha <- START %R% captura(DGT) %R% "/" %R% captura(DGT) %R% "/" %R% captura(DGT) # Detecta el inicio de los datos numericos
+  pat <- or1(c(captura(DGT) %R% END, captura(one_or_more(WRD %R% SPC %R% WRD)) %R% END)) # Detecta el nombre y ID de la estacion 
   
   # Leemos datos 
   nml <- read.delim(url, 
@@ -20,7 +27,10 @@ procesa_datos_diarios <- function(url){
     reshape::rename(c(CNA.SMN.SPMLP.CLIMATOLOGÍA = "Texto"))
   
   datos_num <- nml$Texto[str_detect(nml$Texto, pattern = pat_fecha)]
+  datos_id <- nml$Texto[str_detect(nml$Texto, pattern =  or1(c("NOMBRE " %R% captura(SPC) %R% ":", "ESTACIÓN ")))]
+  id_y_nombre_estacion <<- capwords(str_extract(datos_id, pat) %>% str_remove(pat = START %R% " "), strict = TRUE)
   length(datos_num)      
+  
   
   aaa <- strsplit(datos_num, " ")
   a <- matrix(nrow = 0, ncol = 5)
@@ -45,6 +55,7 @@ procesa_datos_diarios <- function(url){
   return(b)
 }
 
+# GRAFICAS DE DATOS DIARIOS
 plot_diarias <- function(nml, Nombre_estacion = ""){
 require(lubridate)  
 # Sacamos el Periodo    
@@ -55,16 +66,20 @@ periodo <- paste0(as.character(min(lubridate::year(nml$FECHA))),
 p <-   ggplot(nml, aes(x = nml$FECHA, y = nml$PRECIPITACION)) + 
     geom_line(colour = 'blue') + 
     labs(title="Serie de Tiempo de Precipitación Diaria",
-         subtitle=paste0(Nombre_estacion, "Periodo: ", periodo,  ". Nivel Diario"),
-         caption="Fuente: Elaboración propia con datos del SMN - CONAGUA, 2019",
+         subtitle=paste0(Nombre_estacion, " Periodo: ", periodo,  ". Nivel Diario"),
+         caption="FUENTE: SMN - CONAGUA. Registros Diarios meteorológicos disponibles en febrero del 2019.\n https://smn.cna.gob.mx/es/climatologia/informacion-climatologica/informacion-estadistica-climatologica",
          y="Precipitación (mm)" , x = "") +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 90, vjust=0.5),  # rotate x axis text
-          panel.grid.minor = element_blank()) 
+          panel.grid.minor = element_blank()) + 
+  scale_x_date(date_labels = "%Y", 
+               date_breaks = "10 year") 
+
 # Retornamos la grafica  
 return(p)  
 }
 
+# GRAFICAS DE DATOS MENSUALES
 plot_mensuales <- function(nml, Nombre_estacion = ""){
   require(lubridate)
   require(dplyr)
@@ -89,18 +104,24 @@ plot_mensuales <- function(nml, Nombre_estacion = ""){
   p <- ggplot(data = c, aes(x = c$mes_year, y = c$prec_anual)) + 
     geom_line(colour = 'blue') + 
     labs(title="Serie de Tiempo de Precipitación Mensual",
-         subtitle=paste0(Nombre_estacion, "Periodo: ", periodo,  ". Nivel Mensual"),
-         caption="Fuente: Elaboración propia con datos del SMN - CONAGUA, 2019",
+         subtitle=paste0(Nombre_estacion, " Periodo: ", periodo,  ". Nivel Mensual"),
+         caption="FUENTE: SMN - CONAGUA. Registros Diarios meteorológicos disponibles en febrero del 2019.\n https://smn.cna.gob.mx/es/climatologia/informacion-climatologica/informacion-estadistica-climatologica",
          y="Precipitación (mm)" , x = "") +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 90, vjust=0.5),  # rotate x axis text
-          panel.grid.minor = element_blank()) 
+          panel.grid.minor = element_blank()) + 
+    scale_x_date(date_labels = "%Y", 
+            date_breaks = "10 year") 
+  
   return(p)
 }
 
+# GRAFICAS DE DATOS ANUALES
 plot_anual <- function(nml, Nombre_estacion = ""){
   require(lubridate)
   require(dplyr)
+  #nml <- datos_meteo_cdmx
+  #Nombre_estacion <- "Vaya vaya tacubaya"
   # Sacamos el Periodo    
   periodo <- paste0(as.character(min(lubridate::year(nml$FECHA))), 
                     " - ", 
@@ -114,14 +135,18 @@ plot_anual <- function(nml, Nombre_estacion = ""){
               TMAX_prom = mean(TMAX), 
               TMIN_prom = mean(TMIN) 
     ) 
+  
   p <- ggplot(data = c, aes(x = c$YEAR, y = c$prec_anual)) + 
     geom_line(colour = 'blue') + 
     labs(title="Serie de Tiempo de Precipitación Anual",
-         subtitle=paste0(Nombre_estacion, "Periodo: ", periodo,  ". Anual"),
-         caption="Fuente: Elaboración propia con datos del SMN - CONAGUA, 2019",
+         subtitle=paste0(Nombre_estacion, " Periodo: ", periodo,  ". Anual"),
+         caption="FUENTE: SMN - CONAGUA. Registros Diarios meteorológicos disponibles en febrero del 2019.\n https://smn.cna.gob.mx/es/climatologia/informacion-climatologica/informacion-estadistica-climatologica",
          y="Precipitación (mm)" , x = "") +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 90, vjust=0.5),  # rotate x axis text
-          panel.grid.minor = element_blank()) 
+          panel.grid.minor = element_blank()) + 
+    scale_x_continuous(breaks = c(1860, 1870, 1880, 1890, 1900, 1910, 1920, 1930, 1940, 1950, 
+                                  1960, 1970, 1980, 1990, 2000, 2010, 2020))
+  
   return(p)
   }
