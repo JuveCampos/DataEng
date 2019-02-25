@@ -8,6 +8,8 @@ procesa_datos_diarios <- function(url){
   require(dplyr)
   require(reshape)
   
+  captura <- function(x) capture(one_or_more(x))
+  
   # Patrones
   pat_fecha <- START %R% captura(DGT) %R% "/" %R% captura(DGT) %R% "/" %R% captura(DGT)
   
