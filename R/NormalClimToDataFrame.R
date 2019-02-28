@@ -17,8 +17,9 @@ procesa_datos_diarios <- function(url){
   captura <- function(x) capture(one_or_more(x))
   
   # Patrones
+  cc1 <- char_class("()")
   pat_fecha <- START %R% captura(DGT) %R% "/" %R% captura(DGT) %R% "/" %R% captura(DGT) # Detecta el inicio de los datos numericos
-  pat <- or1(c(captura(DGT) %R% END, captura(one_or_more(WRD %R% SPC %R% WRD)) %R% END)) # Detecta el nombre y ID de la estacion 
+  pat <- or1(c(captura(DGT) %R% END, captura(one_or_more(WRD %R% SPC %R% optional(cc1) %R% WRD %R% optional(cc1))) %R% END)) # Detecta el nombre y ID de la estacion 
   
   # Leemos datos 
   nml <- read.delim(url, 
@@ -29,7 +30,7 @@ procesa_datos_diarios <- function(url){
   datos_num <- nml$Texto[str_detect(nml$Texto, pattern = pat_fecha)]
   datos_id <- nml$Texto[str_detect(nml$Texto, pattern =  or1(c("NOMBRE " %R% captura(SPC) %R% ":", "ESTACIÓN ")))]
   id_y_nombre_estacion <<- capwords(str_extract(datos_id, pat) %>% str_remove(pat = START %R% " "), strict = TRUE)
-  length(datos_num)      
+  #length(datos_num)      
   
   
   aaa <- strsplit(datos_num, " ")
@@ -52,6 +53,14 @@ procesa_datos_diarios <- function(url){
   
   b <- reshape::rename(b, c(V1='FECHA', V2='PRECIPITACION', V3='EVAPORACION', V4="TMAX", V5="TMIN"))
   
+  # Metemos los huecos!
+  all_days <- seq.Date(from = min(b$FECHA), to = max(b$FECHA), by = "day") %>% 
+    as.data.frame()
+  names(all_days) <- "FECHA"
+  
+  # Rellenamos los huecos
+  b <- left_join(all_days, b, by = 'FECHA') 
+  
   return(b)
 }
 
@@ -62,6 +71,7 @@ require(lubridate)
 periodo <- paste0(as.character(min(lubridate::year(nml$FECHA))), 
                   " - ", 
                   as.character(max(lubridate::year(nml$FECHA))))
+
 # Generamos la Grafica
 p <-   ggplot(nml, aes(x = nml$FECHA, y = nml$PRECIPITACION)) + 
     geom_line(colour = 'blue') + 
@@ -94,7 +104,7 @@ plot_mensuales <- function(nml, Nombre_estacion = ""){
   
   c <- c %>%
     group_by(YEAR, MES) %>%
-    summarise(prec_anual = sum(na.omit(PRECIPITACION)), 
+    summarise(prec_anual = sum(PRECIPITACION), 
               TMAX_prom = mean(TMAX), 
               TMIN_prom = mean(TMIN) 
     ) %>%
@@ -131,7 +141,7 @@ plot_anual <- function(nml, Nombre_estacion = ""){
   c$YEAR <- year(c$FECHA) 
   c <- c %>%
     group_by(YEAR) %>%
-    summarise(prec_anual = sum(na.omit(PRECIPITACION)), 
+    summarise(prec_anual = sum(PRECIPITACION), 
               TMAX_prom = mean(TMAX), 
               TMIN_prom = mean(TMIN) 
     ) 
@@ -146,7 +156,8 @@ plot_anual <- function(nml, Nombre_estacion = ""){
     theme(axis.text.x = element_text(angle = 90, vjust=0.5),  # rotate x axis text
           panel.grid.minor = element_blank()) + 
     scale_x_continuous(breaks = c(1860, 1870, 1880, 1890, 1900, 1910, 1920, 1930, 1940, 1950, 
-                                  1960, 1970, 1980, 1990, 2000, 2010, 2020))
+                                  1960, 1970, 1980, 1990, 2000, 2010, 2020)) 
   
+  p
   return(p)
   }
