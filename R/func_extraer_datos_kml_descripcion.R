@@ -3,7 +3,7 @@
 extraer_datos <- function(tp) {
   # ESTA FUNCION EXTRAE DATOS DE OBSERVACIONES CON EL TAG <td> #
   # Para una observacion (celda) nos da un vector con los datos #
-  #tp <- a$Description[1] # LINEA DE MANTENIMIENTO. 
+  #tp <- a$Description[1]
   
   require(rebus)
   require(stringr)
@@ -33,20 +33,16 @@ extraer_datos <- function(tp) {
   # 2. Escribimos los datos 
   logico <- str_detect(vars, pat_mayus)
   
-  # 3. 
   grupo <- c(1)
   for (i in 2:length(logico)) {
     if(logico[i] == TRUE)  grupo[i] <- grupo[i-1] + 1
     if(logico[i] == FALSE) grupo[i] <- grupo[i-1]
   }
   
-  grupo
   datos <- cbind(vars, grupo) %>% as.data.frame()
   
   # Armamos una df
   vector_cortado <- split(vars, f = grupo)
-  vector_cortado
-  
   
   data <- c()
   for (i in 1:length(vector_cortado)){
