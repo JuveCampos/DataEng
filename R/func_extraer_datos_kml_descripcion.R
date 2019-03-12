@@ -3,7 +3,7 @@
 extraer_datos <- function(tp) {
   # ESTA FUNCION EXTRAE DATOS DE OBSERVACIONES CON EL TAG <td> #
   # Para una observacion (celda) nos da un vector con los datos #
-  #tp <- a$Description[1]
+  #tp <- a$Description[1] # LINEA DE MANTENIMIENTO. 
   
   require(rebus)
   require(stringr)
