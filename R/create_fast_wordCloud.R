@@ -33,6 +33,8 @@ create_wordcloud <- function(data, stop_words = c(), num_words = 100, background
     data <- data.frame(word = names(data), freq = as.numeric(data))
   }
   
+  freq_palabras <<- data
+  
   # Make sure a proper num_words is provided
   # Nos aseguramos que un numero adecuado de palabras `num_provider` es generado`
   if (!is.numeric(num_words) || num_words < 3) {
