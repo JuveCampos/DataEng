@@ -17,7 +17,7 @@ li = ["juve*****@gmail.com", "juve**.*****@cide.edu"]
 for i in range(len(li)): 
     s = smtplib.SMTP('smtp.gmail.com', 587) 
     s.starttls() 
-    s.login("juve*****@gmail.com", "*******") 
+    s.login("juve*****@gmail.com", "****password***") 
     message = "Correo de prueba"
     s.sendmail("juve*****@gmail.com", li[i], message) 
     s.quit() 
