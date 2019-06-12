@@ -5,9 +5,9 @@ library(sf)
 
 datosDeKml <- function(base, variable = "description"){
   # Pruebas
-  base <- kml1
-  variable <- "description"
-  
+   # base <- ptos
+   # variable <- "description"
+  # 
   # Leemos la columna de datos html de interes
   vector <- base %>% as.data.frame() %>% select(variable) 
   
@@ -17,7 +17,7 @@ datosDeKml <- function(base, variable = "description"){
   datos <- t(a[[2]])[2,] 
   
   # Creamos los datos
-  for (i in 2:length(kml1$description)){
+  for (i in 2:length(vector[,variable])){
     a <- vector[,variable][i] %>% as.vector() %>% minimal_html() %>% html_table(fill = TRUE) 
     datos <- rbind(datos, t(a[[2]])[2,]) 
   }
@@ -28,5 +28,6 @@ datosDeKml <- function(base, variable = "description"){
   
   # Guardamos los datos
   datx <- st_bind_cols(base, datos) 
+  
   return(datx)
 }
