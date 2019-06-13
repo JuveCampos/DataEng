@@ -1,13 +1,15 @@
 # Extraer datos de kml 2
-library(rvest)
-library(dplyr)
-library(sf)
+
 
 datosDeKml <- function(base, variable = "description"){
+  library(rvest)
+  library(dplyr)
+  library(sf)
+  
   # Pruebas
-   # base <- ptos
-   # variable <- "description"
-  # 
+  # base <- ptos
+  # variable <- "description"
+  
   # Leemos la columna de datos html de interes
   vector <- base %>% as.data.frame() %>% select(variable) 
   
