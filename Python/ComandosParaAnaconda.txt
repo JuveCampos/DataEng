@@ -1,0 +1,14 @@
+# Comandos para ambientes en anaconda
+
+# Updatear Anaconda
+conda update -n base -c defaults conda 
+
+# Creación de nuevo ambiente
+conda create --name myenv
+
+# Activar nuevo ambiente
+conda activate myenv
+
+# Instalar BeautifulSoup 
+conda install -c anaconda beautifulsoup4
+
